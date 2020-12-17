@@ -1,0 +1,14 @@
+{
+  "1": {
+    "name": "Some Name",
+    "password": "password",
+    "email": "address@email.com",
+    "id": "7842203e-ee0f-46c3-9d4d-2dc6f0b24701"
+  },
+  "2": {
+    "name": "Some Name",
+    "password": "password",
+    "email": "address@email.com",
+    "id": "6256e32f-1889-4dee-94a7-63a5bc184240"
+  }
+}
