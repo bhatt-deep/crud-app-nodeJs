@@ -4,7 +4,7 @@
 **Setup**
 1) Clone this repository to your local machine.
 2) Run `npm install` to ensure all dependencies are installed.
-3) Inside the data folder, create two new files called entries.json and users.json which have an empty array, e.g. []
+3) Inside the data folder, create two new files called _entries.json_ and _users.json_ which have an empty array, e.g. []
 4) Run `npm start` to run the script.
 
 **REST API list**
