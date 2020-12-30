@@ -1,73 +1,73 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path'
+import * as db from './dbHandler.js'
+import { NotFoundError } from './util/errors.js'
 const router = express.Router()
-const dataPath = './data/users.json';
-const fs = require('fs');
+const dataPath = path.resolve('./data/users.json');
 
-const readFile = (
-    callback,
-    returnJson = false,
-    filePath = dataPath,
-    encoding = 'utf8'
-  ) => {
-    fs.readFile(filePath, encoding, (err, data) => {
-      if (err) {
-        throw err;
-      }
 
-      callback(returnJson ? JSON.parse(data) : data);
-    });
-};
+const validationCheck = (req, res, next) => {
+  const errors = []
+  if (req.body.email == null) {
+      errors.push("email")
+  }
 
-const writeFile = (
-    fileData,
-    callback,
-    filePath = dataPath,
-    encoding = 'utf8'
-  ) => {
-    fs.writeFile(filePath, fileData, encoding, err => {
-      if (err) {
-        throw err;
-      }
+  if (req.body.name == null) {
+      errors.push("name")
+  }
+  if (req.body.password.length<8) {
+    errors.push("minimum length of password should be > 8")
+  }
+  if (errors.length > 0) {
+      return res.status(400).send({message: "errors found", errors})
+  }
+  next()
+}
 
-      callback();
-    });
-};
-
-router.get('/', (req, res) => {
-    readFile(data => {
-        res.send(data);
-      }, true);
+router.get('/', async (req, res, next) => {
+  try {
+    return res.send(await db.getAll(dataPath))
+  } catch (err) {
+    console.error("route error", err)
+    return next(err)
+  }
 });
 
-router.post('/', (req, res) => {
+router.get('/:id', async (req, res, next) => {
+  try {
+    return res.send(await db.getid(req.params.id, dataPath))
+  } catch (err) {
+    console.error("route error", err)
+    return next(err)
+  }
+});
+
+router.use(validationCheck)
+router.post('/', async (req, res, next) => {
     req.body.id = uuidv4();
-    const {  name, password, email } = req.body
-    if ( !name || !email || !password) {
-        return res.status(400).json( { 
-            Message : "Validation Error",
-            Invalid : req.body
-   
-        } )
-    }else if (password.length<8){
-       return res.status(400).Message("Password lenghth should be greater than 8 characters.");
+    try {
+      await db.add(req.body, dataPath)
+
+      return res.status(201).send(req.body)
+  } catch (err) {
+      console.error("are we here?", err)
+      return next(err)
+  }
+});
+
+router.put('/:id', async (req, res, next) => {
+  try {
+      await db.update(req.params.id, req.body, dataPath)
+      return res.status(200).send(req.body)
+  } catch (err) {
+      console.error(err)
+      if (err instanceof NotFoundError) {
+          return res.status(404).send({error: "not found"})
+      } else {
+          next(err)
       }
-      readFile(data => {
-        const newUserId = Object.keys(data).length + 1;
-
-        // add the new user
-        data[newUserId] = req.body;
-
-    
-        writeFile(JSON.stringify(data, null, 2), () => {
-          return res.status(200).json({
-            id : req.body.id,
-            name: req.body.name,
-            email : req.body.email
-          });
-        });
-      }, true);
-
+  }
 });
 
 export default router

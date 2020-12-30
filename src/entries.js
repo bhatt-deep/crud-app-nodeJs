@@ -1,68 +1,76 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path'
+import * as db from './dbHandler.js'
+import { NotFoundError } from './util/errors.js'
 const router = express.Router()
-const dataPath = './data/entries.json';
-const fs = require('fs');
+const dataPath = path.resolve('./data/entries.json');
 
-const readFile = (
-    callback,
-    returnJson = false,
-    filePath = dataPath,
-    encoding = 'utf8'
-  ) => {
-    fs.readFile(filePath, encoding, (err, data) => {
-      if (err) {
-        throw err;
-      }
+const validationCheck = (req, res, next) => {
+  const errors = []
+  if (req.body.email == null) {
+      errors.push("email")
+  }
+  if (req.body.name == null) {
+      errors.push("name")
+  }
+  if (req.body.phoneNumber == null) {
+    errors.push("phoneNumber")
+  }
+  if (req.body.content == null) {
+    errors.push("content")
+  }
+  if (errors.length > 0) {
+      return res.status(400).send({message: "errors found", errors})
+  }
+  next()
+}
 
-      callback(returnJson ? JSON.parse(data) : data);
-    });
-};
 
-const writeFile = (
-    fileData,
-    callback,
-    filePath = dataPath,
-    encoding = 'utf8'
-  ) => {
-    fs.writeFile(filePath, fileData, encoding, err => {
-      if (err) {
-        throw err;
-      }
-
-      callback();
-    });
-};
-
-router.get('/', (req, res) => {
-    readFile(data => {
-        res.send(data);
-      }, true);
+router.get('/', async (req, res, next) => {
+  try {
+    return res.send(await db.getAll(dataPath))
+  } catch (err) {
+    console.error("route error", err)
+    return next(err)
+  }
 });
 
-router.post('/', (req, res) => {
+router.get('/:id', async (req, res, next) => {
+  try {
+    return res.send(await db.getid(req.params.id, dataPath))
+  } catch (err) {
+    console.error("route error", err)
+    return next(err)
+  }
+});
+
+router.use(validationCheck)
+router.post('/', async (req, res, next) => {
     req.body.id = uuidv4();
-    const {  name, email, phoneNumber, content } = req.body
-    if ( !name || !email || !phoneNumber || !content) {
-        return res.status(400).json( { 
-            Message : "Validation Error",
-            Invalid : req.body
-   
-        } )
-    }
-    readFile(data => {
-        const newUserId = Object.keys(data).length + 1;
+    try {
+      await db.add(req.body, dataPath)
 
-        // add the new user
-        data[newUserId] = req.body;
-
-    
-        writeFile(JSON.stringify(data, null, 2), () => {
-          return res.status(200).send(req.body);
-        });
-      }, true);
-    //return res.status(201).send(req.body)
-
+      return res.status(201).send(req.body)
+  } catch (err) {
+      console.error("are we here?", err)
+      return next(err)
+  }
 });
 
-export default router
+router.put('/:id', async (req, res, next) => {
+  try {
+      await db.update(req.params.id, req.body, dataPath)
+      console.log(req.params.id)
+      return res.status(200).send(req.body)
+  } catch (err) {
+      console.error(err)
+      if (err instanceof NotFoundError) {
+          return res.status(404).send({error: "not found"})
+      } else {
+          next(err)
+      }
+  }
+});
+
+export default router;
