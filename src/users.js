@@ -16,11 +16,11 @@ const validationCheck = (req, res, next) => {
   if (req.body.name == null) {
       errors.push("name")
   }
-  if (req.body.password.length<8) {
+  if ( req.body.password == null || req.body.password.length<8) {
     errors.push("minimum length of password should be > 8")
   }
   if (errors.length > 0) {
-      return res.status(400).send({message: "errors found", errors})
+      return res.status(400).send({message: "validation error", errors})
   }
   next()
 }

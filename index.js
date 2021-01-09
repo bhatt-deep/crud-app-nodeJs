@@ -12,7 +12,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 // allows us to parse json 
 app.use(express.json())
 
-app.get('/', (req, res) => res.send('Hello world'))
+app.get('/', (req, res) => res.send({message:"Hello, world!"}))
 app.use('/entries',entriesRoutes)
 app.use('/users',usersRoutes)
 app.use('/auth',authRoutes)
@@ -25,4 +25,5 @@ app.use((err, req, res, next) => {
     return res.status(500).send({error: "not found"})
 });
 
-app.listen(port, () => console.log(`API server ready on http://localhost:${port}`))
+export default app.listen(port, () => console.log(`API server ready on http://localhost:${port}`))
+
