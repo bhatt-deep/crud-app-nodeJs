@@ -15,6 +15,7 @@
 5) run the migrations.
 `node_modules/.bin/knex --esm migrate:latest`
 6) Run `npm start` to run the script.
+7) Run `npm test` to run the test cases.
 
 **REST API list**
 1) POST : /users
