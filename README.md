@@ -23,6 +23,8 @@
 3) GET : /users/:id
 4) PUT : /users/:id
 5) POST : /entries
-6) GET : /entries
-7) GET : /entries/:id
-8) PUT : /entries/:id
+6) GET : /entries **(Protected)**
+7) GET : /entries/:id **(Protected)**
+8) PUT : /entries/:id **(Protected)**
+
+The Protected APIs required `bearer token` to execute.
