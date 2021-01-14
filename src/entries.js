@@ -40,7 +40,7 @@ router.get('/:id',auth(), async (req, res, next) => {
   try {
     let entryList = await db.getid(req.params.id, tablename)
     if(entryList[0]==null){
-      return res.status(500).send({message:"entry "+req.params.id+"not found"});
+      return res.status(500).send({message:`entry ${req.params.id}not found`});
     }
     return res.send(entryList)
   } catch (err) {
