@@ -1,10 +1,10 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path'
 import * as db from './dbHandler.js'
 import { NotFoundError } from './util/errors.js'
+const auth = require('./middleware/auth.middleware');
 const router = express.Router()
-const dataPath = path.resolve('./data/entries.json');
+const tablename = 'entries';
 
 const validationCheck = (req, res, next) => {
   const errors = []
@@ -27,18 +27,22 @@ const validationCheck = (req, res, next) => {
 }
 
 
-router.get('/', async (req, res, next) => {
+router.get('/',auth(), async (req, res, next) => {
   try {
-    return res.send(await db.getAll(dataPath))
+    return res.send(await db.getAll(tablename))
   } catch (err) {
     console.error("route error", err)
     return next(err)
   }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id',auth(), async (req, res, next) => {
   try {
-    return res.send(await db.getid(req.params.id, dataPath))
+    let entryList = await db.getid(req.params.id, tablename)
+    if(entryList[0]==null){
+      return res.status(500).send({message:`entry ${req.params.id}not found`});
+    }
+    return res.send(entryList)
   } catch (err) {
     console.error("route error", err)
     return next(err)
@@ -49,7 +53,7 @@ router.use(validationCheck)
 router.post('/', async (req, res, next) => {
     req.body.id = uuidv4();
     try {
-      await db.add(req.body, dataPath)
+      await db.add(req.body, tablename)
 
       return res.status(201).send(req.body)
   } catch (err) {
@@ -58,9 +62,9 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id',auth(), async (req, res, next) => {
   try {
-      await db.update(req.params.id, req.body, dataPath)
+      await db.update(req.params.id, req.body, tablename)
       console.log(req.params.id)
       return res.status(200).send(req.body)
   } catch (err) {

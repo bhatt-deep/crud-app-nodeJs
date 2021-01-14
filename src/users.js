@@ -1,10 +1,10 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path'
+const bcrypt = require('bcryptjs');
 import * as db from './dbHandler.js'
 import { NotFoundError } from './util/errors.js'
 const router = express.Router()
-const dataPath = path.resolve('./data/users.json');
+const tablename = 'users';
 
 
 const validationCheck = (req, res, next) => {
@@ -16,18 +16,23 @@ const validationCheck = (req, res, next) => {
   if (req.body.name == null) {
       errors.push("name")
   }
-  if (req.body.password.length<8) {
+  if ( req.body.password == null || req.body.password.length<8) {
     errors.push("minimum length of password should be > 8")
   }
   if (errors.length > 0) {
-      return res.status(400).send({message: "errors found", errors})
+      return res.status(400).send({message: "validation error", errors})
   }
   next()
 }
 
 router.get('/', async (req, res, next) => {
   try {
-    return res.send(await db.getAll(dataPath))
+    let userList = await db.getAll(tablename)
+    userList = userList.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+  });
+    return res.send(userList)
   } catch (err) {
     console.error("route error", err)
     return next(err)
@@ -36,7 +41,9 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    return res.send(await db.getid(req.params.id, dataPath))
+    const userList = await db.getid(req.params.id, tablename);
+    const { password, ...userWithoutPassword } = userList[0]
+    return res.send(userWithoutPassword)
   } catch (err) {
     console.error("route error", err)
     return next(err)
@@ -47,9 +54,10 @@ router.use(validationCheck)
 router.post('/', async (req, res, next) => {
     req.body.id = uuidv4();
     try {
-      await db.add(req.body, dataPath)
-
-      return res.status(201).send(req.body)
+      req.body.password = await bcrypt.hash(req.body.password, 8);
+      await db.add(req.body, tablename)
+      const { password, ...userWithoutPassword } = req.body;
+      return res.status(201).send(userWithoutPassword)
   } catch (err) {
       console.error("are we here?", err)
       return next(err)
@@ -58,7 +66,7 @@ router.post('/', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
   try {
-      await db.update(req.params.id, req.body, dataPath)
+      await db.update(req.params.id, req.body, tablename)
       return res.status(200).send(req.body)
   } catch (err) {
       console.error(err)
