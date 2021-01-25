@@ -1,9 +1,12 @@
 import express from 'express';
 import * as db from './dbHandler.js'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'
 const router = express.Router()
-const bcrypt = require('bcryptjs');
+/* const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
+const dotenv = require('dotenv'); */
 dotenv.config();
 const tablename = 'users';
 
