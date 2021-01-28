@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  api:
+    build:
+      context: .
+    depends_on:
+      - db
+    environment: 
+      DATABASE_HOST: db
+      DATABASE_USER: user
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: db
+    command: ["./wait-for-it.sh", "db:3306", "--", "npm", "start"]
+    ports:
+      - "4000:3000"
+
+  db:
+    image: "mysql:5.7"
+    volumes:
+      - "./db:/var/lib/mysql"
+    environment: 
+      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: db
