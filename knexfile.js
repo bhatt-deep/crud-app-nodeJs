@@ -13,9 +13,9 @@ if (process.env.DATABASE_SOCKET) {
 }
 console.log(connection)
 module.exports = {
-      client: 'mysql',
+      client: 'mysql2',
       connection,
       migrations: {
         tableName: 'knex_migrations'
       }
-  }
+}
