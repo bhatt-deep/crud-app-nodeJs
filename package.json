@@ -5,7 +5,7 @@
   "main": "index.js",
   
   "scripts": {
-    "start": "node -r esm index.js",
+    "start": "knex migrate:latest && node -r esm index.js",
     "dev": "nodemon -r esm index.js",
     "test": "knex migrate:latest && mocha -r esm --exit"
   },
