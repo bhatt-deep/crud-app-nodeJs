@@ -1,5 +1,7 @@
 stages:
   - test
+  - build
+  - deploy
 
 run-tests:
   stage: test
@@ -18,3 +20,33 @@ run-tests:
 
   script:
     - docker-compose -f Test.docker-compose.yml up --exit-code-from api
+
+create_image:
+  stage: build
+  only:
+    - master
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker info
+    - echo $DEPLOY_KEY_FILE_PRODUCTION > /tmp/$CI_PIPELINE_ID.json
+    - docker login -u _json_key -p "$(cat /tmp/$CI_PIPELINE_ID.json)" https://gcr.io
+  
+  script:
+    - docker build -t deploy_image .
+    - docker tag deploy_image gcr.io/$PROJECT_ID_PRODUCTION/$SERVICE_NAME
+    - docker push gcr.io/$PROJECT_ID_PRODUCTION/$SERVICE_NAME
+    - rm /tmp/$CI_PIPELINE_ID.json
+
+deploy_service:
+  stage: deploy
+  only:
+    - master
+  image: google/cloud-sdk
+  before_script:
+    - echo $DEPLOY_KEY_FILE_PRODUCTION > /tmp/$CI_PIPELINE_ID.json
+    - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
+  script:
+    - gcloud --project $PROJECT_ID_PRODUCTION run deploy $SERVICE_NAME --image=gcr.io/$PROJECT_ID_PRODUCTION/$SERVICE_NAME --region=northamerica-northeast1 --allow-unauthenticated --add-cloudsql-instances=$CLOUDSQL_CONNECTION_NAME --update-env-vars DATABASE_SOCKET="/cloudsql/$CLOUDSQL_CONNECTION_NAME",DATABASE_USER=$DATABASE_USER,DATABASE_PASSWORD=$dbpass,DATABASE_NAME=$dbname,ENV_PORT=8080 --platform=managed
+    - rm /tmp/$CI_PIPELINE_ID.json
