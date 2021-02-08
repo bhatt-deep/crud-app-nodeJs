@@ -28,6 +28,14 @@ To Enable this functionality, you have to configure few environment variables as
 6) PROJECT_ID_PRODUCTION
 7) SERVICE_NAME
 
+To implement the required infrastructure for this project, you can use this [Terraform repository](https://gitlab.com/deepbhatt/csbc1040-infrastructure).
+
+After implementing the infrastructure, you can create a new branch and make some changes in to it and then merge it to master
+branch. So as soon as the pipelines succeed, the new changes will be deployed to Google CLoud run.
+
+## project demo url: 
+[https://course-project-k6y7krefqa-nn.a.run.app](https://course-project-k6y7krefqa-nn.a.run.app)
+
 
 **REST API list**
 1) POST : /users
